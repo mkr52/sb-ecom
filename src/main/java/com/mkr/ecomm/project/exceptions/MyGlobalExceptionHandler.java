@@ -1,5 +1,7 @@
 package com.mkr.ecomm.project.exceptions;
 
+import com.mkr.ecomm.project.dto.APIResponse;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -9,9 +11,20 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class MyGlobalExceptionHandler {
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<?> handleConstraintViolationException(ConstraintViolationException ex) {
+        String message = ex.getConstraintViolations()
+                .stream()
+                .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                .collect(Collectors.joining(", "));
+        APIResponse apiResponse = new APIResponse(message, false);
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> myMethodArgumentNotValidException(MethodArgumentNotValidException e) {
@@ -26,14 +39,16 @@ public class MyGlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<String> myResourceNotFoundException(ResourceNotFoundException e) {
+    public ResponseEntity<APIResponse> myResourceNotFoundException(ResourceNotFoundException e) {
         String message = e.getMessage();
-        return new ResponseEntity<>(message, HttpStatus.NOT_FOUND);
+        APIResponse apiResponse = new APIResponse(message, false);
+        return new ResponseEntity<>(apiResponse, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(APIException.class)
-    public ResponseEntity<String> myAPIException(APIException e) {
+    public ResponseEntity<APIResponse> myAPIException(APIException e) {
         String message = e.getMessage();
-        return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
+        APIResponse apiResponse = new APIResponse(message, false);
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 }
