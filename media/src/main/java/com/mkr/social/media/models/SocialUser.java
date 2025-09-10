@@ -1,37 +1,44 @@
 package com.mkr.social.media.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.*;
+
+import static jakarta.persistence.CascadeType.REMOVE;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class SocialUser {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(mappedBy = "user")
-    private SocialProfile profile;
+    @OneToOne(mappedBy = "user",
+            cascade = {CascadeType.REMOVE, CascadeType.PERSIST, CascadeType.MERGE})
+    //@JoinColumn(name = "social_profile_id")
+    private SocialProfile socialProfile;
 
-    @OneToMany(mappedBy = "socialUser")
+    @OneToMany(mappedBy = "socialUser", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Post> posts = new ArrayList<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            joinColumns = @JoinColumn(name = "social_user_id"),
-            inverseJoinColumns = @JoinColumn(name = "social_group_id")
+            name = "user_group",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "group_id")
     )
     private Set<SocialGroup> groups = new HashSet<>();
 
     @Override
     public int hashCode(){
         return Objects.hash(id);
+    }
+
+    public void setSocialProfile(SocialProfile socialProfile){
+        socialProfile.setUser(this);
+        this.socialProfile = socialProfile;
     }
 }

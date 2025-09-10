@@ -24,7 +24,7 @@ import java.util.Optional;
 @Service
 public class CategoryServiceImpl implements CategoryService{
     //private List<Category> categories = new ArrayList<>();
-    private Long nextId = 1L;
+//    private Long nextId = 1L;
 
     @Autowired
     private CategoryRepository categoryRepository;
@@ -58,12 +58,23 @@ public class CategoryServiceImpl implements CategoryService{
 
     @Override
     public CategoryDTO addCategory(CategoryDTO categoryDTO) {
-        Category category = modelMapper.map(categoryDTO, Category.class);
-        Category categoryFromDb = categoryRepository.findByCategoryName(category.getCategoryName());
-        if (categoryFromDb != null)
-            throw new APIException("Category with the name " + category.getCategoryName() + " already exists !!!");
+        if (categoryRepository.findByCategoryName(categoryDTO.getCategoryName()) != null) {
+            throw new APIException(
+                    "Category with the name '" + categoryDTO.getCategoryName() + "' already exists."
+            );
+        }
+        // Map DTO -> Entity
+        Category category = new Category();
+        category.setCategoryName(categoryDTO.getCategoryName());
+
+        // Save the new category and return as DTO
         Category savedCategory = categoryRepository.save(category);
-        return modelMapper.map(savedCategory, CategoryDTO.class);
+        CategoryDTO savedCategoryDTO = new CategoryDTO(
+                savedCategory.getCategoryId(),
+                savedCategory.getCategoryName()
+        );
+
+        return savedCategoryDTO;
     }
 
     @Override
